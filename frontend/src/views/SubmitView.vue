@@ -39,25 +39,45 @@
       </el-descriptions>
 
       <div v-if="currentSubmission" class="current-submission">
-        <h3>当前已交文件</h3>
+        <div class="submission-head">
+          <div>
+            <span class="section-kicker">当前有效版本</span>
+            <h3>已提交文件</h3>
+          </div>
+          <el-tag type="success">第 {{ currentSubmission.versionNo }} 版</el-tag>
+        </div>
         <div class="submission-info">
-          <span>文件：{{ currentSubmission.originalName || currentSubmission.storedName }}</span>
-          <span>重命名：{{ currentSubmission.storedName }}</span>
-          <span>归档PDF：{{ currentSubmission.processedName || '待生成' }}</span>
-          <span>提交时间：{{ formatDate(currentSubmission.submitTime) }}</span>
-          <span>版本：第 {{ currentSubmission.versionNo }} 版</span>
+          <div>
+            <span>原文件</span>
+            <strong>{{ currentSubmission.originalName || currentSubmission.storedName }}</strong>
+          </div>
+          <div>
+            <span>系统重命名</span>
+            <strong>{{ currentSubmission.storedName }}</strong>
+          </div>
+          <div>
+            <span>归档 PDF</span>
+            <strong>{{ currentSubmission.processedName || '待生成' }}</strong>
+          </div>
+          <div>
+            <span>提交时间</span>
+            <strong>{{ formatDate(currentSubmission.submitTime) }}</strong>
+          </div>
         </div>
         <div class="review-result" :class="{ reviewed: isReviewed }">
-          <div>
-            <span class="review-kicker">批阅结果</span>
-            <strong>{{ isReviewed ? `${formatScore(currentSubmission.score)} 分` : '未批阅' }}</strong>
+          <div class="review-icon">
+            <el-icon><DocumentChecked v-if="isReviewed" /><Clock v-else /></el-icon>
           </div>
-          <p>
-            {{ isReviewed ? currentSubmission.reviewComment || '老师未填写评语' : '老师还没有批阅这份作业，请稍后查看。' }}
-          </p>
-          <span v-if="isReviewed" class="review-time">
-            {{ currentSubmission.reviewerName || '老师' }} / {{ formatDate(currentSubmission.reviewedAt) }}
-          </span>
+          <div class="review-copy">
+            <span class="review-kicker">{{ isReviewed ? '批阅结果' : '等待批阅' }}</span>
+            <strong>{{ isReviewed ? `${formatScore(currentSubmission.score)} 分` : '未批阅' }}</strong>
+            <p>
+              {{ isReviewed ? currentSubmission.reviewComment || '老师未填写评语' : '老师还没有批阅这份作业，请稍后查看。' }}
+            </p>
+            <span v-if="isReviewed" class="review-time">
+              {{ currentSubmission.reviewerName || '老师' }} / {{ formatDate(currentSubmission.reviewedAt) }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -160,7 +180,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
+import { Clock, DocumentChecked, UploadFilled } from '@element-plus/icons-vue'
 import { getAssignment, getMySubmission, getSubmissionHistory, submitHomework } from '../api/assignment'
 import { useUserStore } from '../stores/user'
 
@@ -404,62 +424,119 @@ onMounted(load)
 .current-submission {
   margin-top: 18px;
   padding: 16px;
-  background: linear-gradient(135deg, #f8fafc, #eff6ff);
+  background: #ffffff;
   border: 1px solid var(--app-border);
   border-radius: 8px;
 }
 
+.submission-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--app-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .current-submission h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
+  margin: 0;
+  font-size: 17px;
 }
 
 .submission-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  color: #374151;
-  font-size: 13px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.review-result {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 14px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+.submission-info div {
+  min-width: 0;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid var(--app-border-soft);
   border-radius: 8px;
 }
 
-.review-result.reviewed {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-}
-
-.review-result strong,
+.submission-info span,
 .review-kicker,
 .review-time {
   display: block;
-}
-
-.review-result strong {
-  margin-top: 4px;
-  color: #0f172a;
-  font-size: 24px;
-  line-height: 1;
-}
-
-.review-kicker,
-.review-time {
   color: var(--app-muted);
   font-size: 12px;
 }
 
+.submission-info strong {
+  display: block;
+  margin-top: 5px;
+  overflow: hidden;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-result {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+}
+
+.review-result.reviewed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.review-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid var(--app-border-soft);
+  border-radius: 8px;
+}
+
+.review-result.reviewed .review-icon {
+  color: var(--app-success);
+  border-color: #bbf7d0;
+}
+
+.review-copy {
+  min-width: 0;
+}
+
+.review-result strong {
+  display: block;
+  margin-top: 2px;
+  color: #0f172a;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
 .review-result p {
-  margin: 0;
+  margin: 5px 0 0;
   color: #334155;
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.review-time {
+  margin-top: 5px;
 }
 
 .deadline-alert {
@@ -500,5 +577,17 @@ onMounted(load)
   justify-content: flex-end;
   gap: 10px;
   margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .submission-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .submission-info {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
