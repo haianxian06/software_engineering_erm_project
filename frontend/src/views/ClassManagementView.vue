@@ -16,12 +16,9 @@
       <div class="panel">
         <div class="section-title">
           <h3>创建班级</h3>
-          <p class="meta">按专业自动匹配学生</p>
+          <p class="meta">填写专业和课程后，系统自动生成班级并匹配同专业学生</p>
         </div>
         <el-form label-position="top" :model="form">
-          <el-form-item label="班级名称">
-            <el-input v-model="form.className" placeholder="例如 计算机科学与技术-软件工程班" />
-          </el-form-item>
           <el-form-item label="专业">
             <el-input v-model="form.major" placeholder="例如 计算机科学与技术" />
           </el-form-item>
@@ -31,6 +28,7 @@
           <el-form-item label="年级">
             <el-input v-model="form.grade" placeholder="例如 2023" />
           </el-form-item>
+          <p class="meta class-name-preview">班级名称：{{ generatedClassName }}</p>
           <el-button type="primary" :loading="creating" @click="createNewClass">
             创建班级
           </el-button>
@@ -125,7 +123,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh } from '@element-plus/icons-vue'
 import {
@@ -149,10 +147,16 @@ const creating = ref(false)
 const adding = ref(false)
 
 const form = reactive({
-  className: '',
   major: '',
   courseName: '',
   grade: '2023'
+})
+
+const generatedClassName = computed(() => {
+  if (!form.major || !form.courseName) {
+    return '填写专业和课程后自动生成'
+  }
+  return `${form.major}-${form.courseName}班`
 })
 
 async function loadClasses() {
@@ -182,15 +186,14 @@ async function selectClass(row) {
 }
 
 async function createNewClass() {
-  if (!form.className || !form.major || !form.courseName) {
-    ElMessage.warning('请填写班级名称、专业和课程名称')
+  if (!form.major || !form.courseName) {
+    ElMessage.warning('请填写专业和课程名称')
     return
   }
   creating.value = true
   try {
     const created = await createClass({ ...form, createdBy: user.id })
     ElMessage.success('班级已创建，并已加入同专业学生')
-    form.className = ''
     form.courseName = ''
     await loadClasses()
     await selectClass(created)
@@ -288,6 +291,10 @@ onMounted(loadClasses)
 
 .member-panel {
   margin-top: 16px;
+}
+
+.class-name-preview {
+  margin: -2px 0 18px;
 }
 
 .member-actions {

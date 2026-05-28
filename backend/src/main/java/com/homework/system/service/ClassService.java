@@ -34,8 +34,9 @@ public class ClassService {
     public ClassInfo createClass(ClassRequest request) {
         userRepository.findById(request.createdBy())
                 .orElseThrow(() -> new BusinessException("创建人不存在"));
+        String className = normalizeClassName(request);
         Long classId = classRepository.saveClass(
-                request.className(),
+                className,
                 request.major(),
                 request.courseName(),
                 request.grade(),
@@ -47,6 +48,15 @@ public class ClassService {
                 .filter(item -> item.id().equals(classId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("班级创建失败"));
+    }
+
+    private String normalizeClassName(ClassRequest request) {
+        if (request.className() != null && !request.className().isBlank()) {
+            return request.className().trim();
+        }
+        String major = request.major().trim();
+        String courseName = request.courseName().trim();
+        return major + "-" + courseName + "班";
     }
 
     public List<ClassMemberResponse> listMembers(Long classId) {
