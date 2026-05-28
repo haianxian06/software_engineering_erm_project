@@ -16,6 +16,10 @@ export function updateAssignment(id, data) {
   return http.put(`/assignments/${id}`, data)
 }
 
+export function deleteAssignment(id) {
+  return http.delete(`/assignments/${id}`)
+}
+
 export function submitHomework(formData) {
   return http.post('/submissions', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }

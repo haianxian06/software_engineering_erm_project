@@ -12,7 +12,9 @@ import com.homework.system.repository.StudentRepository;
 import com.homework.system.repository.SubmissionCheckRepository;
 import com.homework.system.repository.SubmissionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,15 +25,18 @@ public class AssignmentService {
     private final StudentRepository studentRepository;
     private final SubmissionRepository submissionRepository;
     private final SubmissionCheckRepository submissionCheckRepository;
+    private final FileStorageService fileStorageService;
 
     public AssignmentService(AssignmentRepository assignmentRepository,
                              StudentRepository studentRepository,
                              SubmissionRepository submissionRepository,
-                             SubmissionCheckRepository submissionCheckRepository) {
+                             SubmissionCheckRepository submissionCheckRepository,
+                             FileStorageService fileStorageService) {
         this.assignmentRepository = assignmentRepository;
         this.studentRepository = studentRepository;
         this.submissionRepository = submissionRepository;
         this.submissionCheckRepository = submissionCheckRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     public List<Assignment> listAssignments() {
@@ -115,6 +120,21 @@ public class AssignmentService {
                 missingStudents,
                 snapshot.checkedAt()
         );
+    }
+
+    @Transactional
+    public void deleteAssignment(Long id) {
+        Assignment assignment = getAssignment(id);
+        List<String> artifactPaths = assignmentRepository.findArtifactPaths(id);
+        int deleted = assignmentRepository.deleteById(id);
+        if (deleted == 0) {
+            throw new BusinessException("作业不存在或已被删除");
+        }
+        try {
+            fileStorageService.deleteAssignmentArtifacts(assignment, artifactPaths);
+        } catch (IOException e) {
+            throw new BusinessException("作业记录已删除，但文件清理失败：" + e.getMessage());
+        }
     }
 
     private String normalizeStatus(String status) {

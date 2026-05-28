@@ -193,6 +193,41 @@ public class AssignmentRepository {
         saveFileTypes(assignment.id(), assignment.fileTypes());
     }
 
+    public List<String> findArtifactPaths(Long assignmentId) {
+        return jdbcTemplate.queryForList("""
+                select fr.storage_key
+                from file_record fr
+                join submission s on s.id = fr.submission_id
+                where s.assignment_id = ?
+                  and fr.storage_key is not null
+                union all
+                select fr.processed_storage_key
+                from file_record fr
+                join submission s on s.id = fr.submission_id
+                where s.assignment_id = ?
+                  and fr.processed_storage_key is not null
+                union all
+                select ap.zip_path
+                from archive_package ap
+                where ap.assignment_id = ?
+                  and ap.zip_path is not null
+                """, String.class, assignmentId, assignmentId, assignmentId);
+    }
+
+    public int deleteById(Long assignmentId) {
+        jdbcTemplate.update("delete from archive_package where assignment_id = ?", assignmentId);
+        jdbcTemplate.update("delete from submission_check_status where assignment_id = ?", assignmentId);
+        jdbcTemplate.update("""
+                delete fr
+                from file_record fr
+                join submission s on s.id = fr.submission_id
+                where s.assignment_id = ?
+                """, assignmentId);
+        jdbcTemplate.update("delete from submission where assignment_id = ?", assignmentId);
+        jdbcTemplate.update("delete from assignment_file_type where assignment_id = ?", assignmentId);
+        return jdbcTemplate.update("delete from assignment where id = ?", assignmentId);
+    }
+
     private void saveFileTypes(Long assignmentId, String fileTypes) {
         Set<String> extensions = Arrays.stream(fileTypes == null ? new String[0] : fileTypes.split(","))
                 .map(String::trim)

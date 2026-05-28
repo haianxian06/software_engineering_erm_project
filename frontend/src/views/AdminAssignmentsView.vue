@@ -48,13 +48,16 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="210" fixed="right">
+        <el-table-column label="操作" width="270" fixed="right">
           <template #default="{ row }">
             <el-button v-if="row.status === 'PUBLISHED'" size="small" :icon="DataAnalysis" @click="showStats(row.id)">
               统计
             </el-button>
             <el-button v-else size="small" type="primary" :icon="Edit" @click="editDraft(row.id)">
               继续编辑
+            </el-button>
+            <el-button size="small" type="danger" plain :icon="Delete" @click="removeAssignment(row)">
+              删除
             </el-button>
           </template>
         </el-table-column>
@@ -66,8 +69,9 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { DataAnalysis, Edit, Plus, Refresh } from '@element-plus/icons-vue'
-import { listAssignments } from '../api/assignment'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { DataAnalysis, Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue'
+import { deleteAssignment, listAssignments } from '../api/assignment'
 import { useUserStore } from '../stores/user'
 
 const router = useRouter()
@@ -95,6 +99,25 @@ function showStats(id) {
 
 function editDraft(id) {
   router.push(`/admin/assignments/${id}/edit`)
+}
+
+async function removeAssignment(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除“${row.title}”吗？删除后会同时清理提交记录、统计记录和归档文件。`,
+      '删除作业',
+      {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+      }
+    )
+  } catch {
+    return
+  }
+  await deleteAssignment(row.id)
+  ElMessage.success('作业已删除')
+  await load()
 }
 
 function formatDate(value) {

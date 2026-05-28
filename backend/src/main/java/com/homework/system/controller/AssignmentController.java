@@ -5,6 +5,7 @@ import com.homework.system.dto.StatisticsResponse;
 import com.homework.system.entity.Assignment;
 import com.homework.system.service.AssignmentService;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,6 +47,11 @@ public class AssignmentController {
     public Assignment updateAssignment(@PathVariable Long id,
                                        @Valid @RequestBody AssignmentRequest request) {
         return assignmentService.updateAssignment(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteAssignment(@PathVariable Long id) {
+        assignmentService.deleteAssignment(id);
     }
 
     @GetMapping("/{id}/statistics")

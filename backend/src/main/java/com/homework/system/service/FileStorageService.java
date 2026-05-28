@@ -12,8 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 @Service
 public class FileStorageService {
@@ -66,11 +68,34 @@ public class FileStorageService {
                 .resolve(assignment.id() + "_" + cleanName(assignment.title()));
     }
 
+    public void deleteAssignmentArtifacts(Assignment assignment, List<String> artifactPaths) throws IOException {
+        for (String artifactPath : artifactPaths) {
+            deletePath(Path.of(artifactPath));
+        }
+        deletePath(Path.of(appProperties.getUploadDir(), String.valueOf(assignment.id())));
+        deletePath(resolveAssignmentArchiveDir(assignment));
+    }
+
     private String resolveArchiveDir() {
         if (appProperties.getArchiveDir() != null && !appProperties.getArchiveDir().isBlank()) {
             return appProperties.getArchiveDir();
         }
         return Path.of(appProperties.getUploadDir()).getParent().resolve("archives").toString();
+    }
+
+    private void deletePath(Path path) throws IOException {
+        if (path == null || !Files.exists(path)) {
+            return;
+        }
+        if (Files.isDirectory(path)) {
+            try (Stream<Path> paths = Files.walk(path)) {
+                for (Path item : paths.sorted(Comparator.reverseOrder()).toList()) {
+                    Files.deleteIfExists(item);
+                }
+            }
+        } else {
+            Files.deleteIfExists(path);
+        }
     }
 
     private List<String> buildPdfLines(Assignment assignment, String storedName, Path originalPath,
