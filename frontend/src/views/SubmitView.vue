@@ -27,6 +27,12 @@
           <el-tag v-if="currentSubmission" type="success">已提交，第 {{ currentSubmission.versionNo }} 版</el-tag>
           <el-tag v-else type="info">未提交</el-tag>
         </el-descriptions-item>
+        <el-descriptions-item label="批阅状态">
+          <el-tag v-if="currentSubmission" :type="isReviewed ? 'success' : 'warning'">
+            {{ isReviewed ? '已批阅' : '未批阅' }}
+          </el-tag>
+          <el-tag v-else type="info">未提交</el-tag>
+        </el-descriptions-item>
         <el-descriptions-item label="是否可修改">
           <el-tag :type="canModify ? 'success' : 'danger'">{{ canModify ? '截止前可修改' : '已截止' }}</el-tag>
         </el-descriptions-item>
@@ -40,6 +46,18 @@
           <span>归档PDF：{{ currentSubmission.processedName || '待生成' }}</span>
           <span>提交时间：{{ formatDate(currentSubmission.submitTime) }}</span>
           <span>版本：第 {{ currentSubmission.versionNo }} 版</span>
+        </div>
+        <div class="review-result" :class="{ reviewed: isReviewed }">
+          <div>
+            <span class="review-kicker">批阅结果</span>
+            <strong>{{ isReviewed ? `${formatScore(currentSubmission.score)} 分` : '未批阅' }}</strong>
+          </div>
+          <p>
+            {{ isReviewed ? currentSubmission.reviewComment || '老师未填写评语' : '老师还没有批阅这份作业，请稍后查看。' }}
+          </p>
+          <span v-if="isReviewed" class="review-time">
+            {{ currentSubmission.reviewerName || '老师' }} / {{ formatDate(currentSubmission.reviewedAt) }}
+          </span>
         </div>
       </div>
 
@@ -168,6 +186,8 @@ const isExpired = computed(() => {
 })
 
 const canModify = computed(() => !isExpired.value)
+
+const isReviewed = computed(() => currentSubmission.value?.reviewStatus === 'REVIEWED')
 
 const allowedExtensions = computed(() => {
   if (!assignment.value.fileTypes) {
@@ -353,6 +373,13 @@ function formatDate(value) {
   return value ? value.replace('T', ' ').slice(0, 16) : '-'
 }
 
+function formatScore(value) {
+  if (value == null) {
+    return '-'
+  }
+  return Number(value).toFixed(1).replace(/\.0$/, '')
+}
+
 function getExtension(filename) {
   if (!filename || !filename.includes('.')) {
     return ''
@@ -393,6 +420,46 @@ onMounted(load)
   gap: 10px 18px;
   color: #374151;
   font-size: 13px;
+}
+
+.review-result {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+}
+
+.review-result.reviewed {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.review-result strong,
+.review-kicker,
+.review-time {
+  display: block;
+}
+
+.review-result strong {
+  margin-top: 4px;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.review-kicker,
+.review-time {
+  color: var(--app-muted);
+  font-size: 12px;
+}
+
+.review-result p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.7;
 }
 
 .deadline-alert {

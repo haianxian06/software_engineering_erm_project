@@ -39,6 +39,18 @@
           <strong>{{ formatDate(stats.lastCheckedAt) }}</strong>
         </div>
       </div>
+      <div class="panel">
+        <div class="check-time">
+          <span>已批阅</span>
+          <strong>{{ reviewedCount }} 份</strong>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="check-time">
+          <span>未批阅</span>
+          <strong>{{ unreviewedCount }} 份</strong>
+        </div>
+      </div>
     </div>
 
     <div class="panel dashboard-panel">
@@ -77,11 +89,37 @@
       <el-table :data="stats.submissions || []" stripe>
         <el-table-column prop="studentNo" label="学号" width="140" />
         <el-table-column prop="realName" label="姓名" width="120" />
+        <el-table-column label="批阅状态" width="110">
+          <template #default="{ row }">
+            <el-tag :type="isReviewed(row) ? 'success' : 'warning'" effect="light">
+              {{ isReviewed(row) ? '已批阅' : '未批阅' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="分数" width="90">
+          <template #default="{ row }">
+            <strong v-if="isReviewed(row)" class="score-text">{{ formatScore(row.score) }}</strong>
+            <span v-else class="muted-text">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="评语" min-width="180">
+          <template #default="{ row }">
+            <span :class="isReviewed(row) ? 'comment-text' : 'muted-text'">
+              {{ row.reviewComment || '暂无评语' }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="storedName" label="文件名" min-width="220" />
         <el-table-column prop="processedName" label="归档PDF" min-width="220" />
-        <el-table-column prop="processedStorageKey" label="归档目录" min-width="260" />
         <el-table-column prop="submitTime" label="提交时间" min-width="170">
           <template #default="{ row }">{{ formatDate(row.submitTime) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="130" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" plain @click="openReview(row)">
+              {{ isReviewed(row) ? '修改批阅' : '批阅' }}
+            </el-button>
+          </template>
         </el-table-column>
       </el-table>
     </div>
@@ -108,6 +146,45 @@
         <el-button type="primary" @click="openDownloadLink">下载Zip</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="reviewDialogVisible" title="作业批阅" width="560px">
+      <div v-if="reviewingSubmission" class="review-dialog-head">
+        <div>
+          <strong>{{ reviewingSubmission.realName }}</strong>
+          <span>{{ reviewingSubmission.studentNo }} / 第 {{ reviewingSubmission.versionNo }} 版</span>
+        </div>
+        <el-tag :type="isReviewed(reviewingSubmission) ? 'success' : 'warning'">
+          {{ isReviewed(reviewingSubmission) ? '已批阅' : '未批阅' }}
+        </el-tag>
+      </div>
+      <el-form label-position="top" class="review-form">
+        <el-form-item label="分数">
+          <el-input-number
+            v-model="reviewForm.score"
+            :min="0"
+            :max="100"
+            :precision="1"
+            :step="1"
+            controls-position="right"
+            class="score-input"
+          />
+        </el-form-item>
+        <el-form-item label="评语">
+          <el-input
+            v-model="reviewForm.comment"
+            type="textarea"
+            :rows="5"
+            maxlength="500"
+            show-word-limit
+            placeholder="写下主要问题、优点或修改建议"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="reviewDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="savingReview" @click="saveReview">保存批阅</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -115,16 +192,33 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getAssignmentStatistics, packageAssignmentArchive } from '../api/assignment'
+import { getAssignmentStatistics, packageAssignmentArchive, reviewSubmission } from '../api/assignment'
+import { useUserStore } from '../stores/user'
 
 const route = useRoute()
+const user = useUserStore()
 const stats = ref({})
 const packaging = ref(false)
 const packageDialogVisible = ref(false)
 const packageInfo = ref({})
+const reviewDialogVisible = ref(false)
+const reviewingSubmission = ref(null)
+const savingReview = ref(false)
+const reviewForm = ref({
+  score: 90,
+  comment: ''
+})
 
 const missingCount = computed(() =>
   Math.max(Number(stats.value.totalStudents || 0) - Number(stats.value.submittedCount || 0), 0)
+)
+
+const reviewedCount = computed(() =>
+  (stats.value.submissions || []).filter((item) => isReviewed(item)).length
+)
+
+const unreviewedCount = computed(() =>
+  Math.max(Number(stats.value.submittedCount || 0) - reviewedCount.value, 0)
 )
 
 const pieStyle = computed(() => {
@@ -156,6 +250,38 @@ async function packageArchive() {
   }
 }
 
+function openReview(row) {
+  reviewingSubmission.value = row
+  reviewForm.value = {
+    score: row.score == null ? 90 : Number(row.score),
+    comment: row.reviewComment || ''
+  }
+  reviewDialogVisible.value = true
+}
+
+async function saveReview() {
+  if (!reviewingSubmission.value) {
+    return
+  }
+  if (reviewForm.value.score == null) {
+    ElMessage.warning('请填写分数')
+    return
+  }
+  savingReview.value = true
+  try {
+    await reviewSubmission(reviewingSubmission.value.submissionId, {
+      score: reviewForm.value.score,
+      comment: reviewForm.value.comment,
+      reviewedBy: user.id
+    })
+    ElMessage.success('批阅已保存')
+    reviewDialogVisible.value = false
+    await load()
+  } finally {
+    savingReview.value = false
+  }
+}
+
 function openDownloadLink() {
   if (!fullDownloadUrl.value) {
     return
@@ -176,6 +302,17 @@ function formatSize(value) {
     return `${(size / 1024).toFixed(1)} KB`
   }
   return `${size} B`
+}
+
+function isReviewed(row) {
+  return row?.reviewStatus === 'REVIEWED'
+}
+
+function formatScore(value) {
+  if (value == null) {
+    return '-'
+  }
+  return Number(value).toFixed(1).replace(/\.0$/, '')
 }
 
 onMounted(load)
@@ -206,6 +343,55 @@ onMounted(load)
 .dashboard-head h3,
 .stats-table h3 {
   margin: 0 0 8px;
+}
+
+.score-text {
+  color: #2563eb;
+  font-size: 16px;
+}
+
+.muted-text {
+  color: #94a3b8;
+}
+
+.comment-text {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  color: #334155;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.review-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f8fafc, #eef6ff);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+}
+
+.review-dialog-head strong,
+.review-dialog-head span {
+  display: block;
+}
+
+.review-dialog-head span {
+  margin-top: 4px;
+  color: var(--app-muted);
+  font-size: 13px;
+}
+
+.review-form {
+  margin-top: 4px;
+}
+
+.score-input {
+  width: 180px;
 }
 
 .chart-row {

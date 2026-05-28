@@ -34,6 +34,10 @@ export function getSubmissionHistory(params) {
   return http.get('/submissions/history', { params })
 }
 
+export function reviewSubmission(submissionId, data) {
+  return http.put(`/submissions/${submissionId}/review`, data)
+}
+
 export function getAssignmentStatistics(id) {
   return http.get(`/assignments/${id}/statistics`)
 }

@@ -223,6 +223,12 @@ public class AssignmentRepository {
                 join submission s on s.id = fr.submission_id
                 where s.assignment_id = ?
                 """, assignmentId);
+        jdbcTemplate.update("""
+                delete sr
+                from submission_review sr
+                join submission s on s.id = sr.submission_id
+                where s.assignment_id = ?
+                """, assignmentId);
         jdbcTemplate.update("delete from submission where assignment_id = ?", assignmentId);
         jdbcTemplate.update("delete from assignment_file_type where assignment_id = ?", assignmentId);
         return jdbcTemplate.update("delete from assignment where id = ?", assignmentId);

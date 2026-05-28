@@ -8,29 +8,40 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class SubmissionRepository {
 
-    private static final RowMapper<SubmissionSummary> SUMMARY_ROW_MAPPER = (rs, rowNum) -> new SubmissionSummary(
-            rs.getLong("submission_id"),
-            rs.getString("student_no"),
-            rs.getString("real_name"),
-            rs.getString("stored_name"),
-            rs.getString("original_name"),
-            rs.getLong("file_size"),
-            rs.getTimestamp("submit_time").toLocalDateTime(),
-            rs.getInt("version_no"),
-            rs.getString("submission_status"),
-            rs.getBoolean("is_final"),
-            rs.getString("processed_name"),
-            rs.getString("processed_storage_key"),
-            rs.getString("processed_type")
-    );
+    private static final RowMapper<SubmissionSummary> SUMMARY_ROW_MAPPER = (rs, rowNum) -> {
+        Timestamp reviewedAt = rs.getTimestamp("reviewed_at");
+        return new SubmissionSummary(
+                rs.getLong("submission_id"),
+                rs.getString("student_no"),
+                rs.getString("real_name"),
+                rs.getString("stored_name"),
+                rs.getString("original_name"),
+                rs.getLong("file_size"),
+                rs.getTimestamp("submit_time").toLocalDateTime(),
+                rs.getInt("version_no"),
+                rs.getString("submission_status"),
+                rs.getBoolean("is_final"),
+                rs.getString("processed_name"),
+                rs.getString("processed_storage_key"),
+                rs.getString("processed_type"),
+                rs.getString("review_status"),
+                rs.getBigDecimal("score"),
+                rs.getString("review_comment"),
+                rs.getObject("reviewed_by") == null ? null : rs.getLong("reviewed_by"),
+                rs.getString("reviewer_name"),
+                reviewedAt == null ? null : reviewedAt.toLocalDateTime()
+        );
+    };
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -94,10 +105,18 @@ public class SubmissionRepository {
                        s.is_final,
                        f.processed_name,
                        f.processed_storage_key,
-                       f.processed_type
+                       f.processed_type,
+                       case when r.id is null then 'UNREVIEWED' else 'REVIEWED' end as review_status,
+                       r.score,
+                       r.comment as review_comment,
+                       r.reviewed_by,
+                       reviewer.real_name as reviewer_name,
+                       r.reviewed_at
                 from submission s
                 join sys_user u on s.student_id = u.id
                 left join file_record f on f.submission_id = s.id
+                left join submission_review r on r.submission_id = s.id
+                left join sys_user reviewer on reviewer.id = r.reviewed_by
                 where s.assignment_id = ? and s.is_final = 1
                 order by u.student_no
                 """, SUMMARY_ROW_MAPPER, assignmentId);
@@ -117,10 +136,18 @@ public class SubmissionRepository {
                        s.is_final,
                        f.processed_name,
                        f.processed_storage_key,
-                       f.processed_type
+                       f.processed_type,
+                       case when r.id is null then 'UNREVIEWED' else 'REVIEWED' end as review_status,
+                       r.score,
+                       r.comment as review_comment,
+                       r.reviewed_by,
+                       reviewer.real_name as reviewer_name,
+                       r.reviewed_at
                 from submission s
                 join sys_user u on s.student_id = u.id
                 left join file_record f on f.submission_id = s.id
+                left join submission_review r on r.submission_id = s.id
+                left join sys_user reviewer on reviewer.id = r.reviewed_by
                 where s.assignment_id = ?
                   and u.student_no = ?
                   and s.is_final = 1
@@ -144,13 +171,42 @@ public class SubmissionRepository {
                        s.is_final,
                        f.processed_name,
                        f.processed_storage_key,
-                       f.processed_type
+                       f.processed_type,
+                       case when r.id is null then 'UNREVIEWED' else 'REVIEWED' end as review_status,
+                       r.score,
+                       r.comment as review_comment,
+                       r.reviewed_by,
+                       reviewer.real_name as reviewer_name,
+                       r.reviewed_at
                 from submission s
                 join sys_user u on s.student_id = u.id
                 left join file_record f on f.submission_id = s.id
+                left join submission_review r on r.submission_id = s.id
+                left join sys_user reviewer on reviewer.id = r.reviewed_by
                 where s.assignment_id = ?
                   and u.student_no = ?
                 order by s.version_no desc, s.submit_time desc
                 """, SUMMARY_ROW_MAPPER, assignmentId, studentNo);
+    }
+
+    public boolean existsById(Long submissionId) {
+        Integer count = jdbcTemplate.queryForObject("""
+                select count(*)
+                from submission
+                where id = ?
+                """, Integer.class, submissionId);
+        return count != null && count > 0;
+    }
+
+    public void saveReview(Long submissionId, BigDecimal score, String comment, Long reviewedBy) {
+        jdbcTemplate.update("""
+                insert into submission_review(submission_id, score, comment, reviewed_by, reviewed_at)
+                values (?, ?, ?, ?, current_timestamp)
+                on duplicate key update
+                    score = values(score),
+                    comment = values(comment),
+                    reviewed_by = values(reviewed_by),
+                    reviewed_at = current_timestamp
+                """, submissionId, score, comment, reviewedBy);
     }
 }

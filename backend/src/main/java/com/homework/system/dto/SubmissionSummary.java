@@ -1,5 +1,6 @@
 package com.homework.system.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record SubmissionSummary(
@@ -15,6 +16,12 @@ public record SubmissionSummary(
         Boolean finalVersion,
         String processedName,
         String processedStorageKey,
-        String processedType
+        String processedType,
+        String reviewStatus,
+        BigDecimal score,
+        String reviewComment,
+        Long reviewedBy,
+        String reviewerName,
+        LocalDateTime reviewedAt
 ) {
 }

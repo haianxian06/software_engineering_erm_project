@@ -1,13 +1,16 @@
 package com.homework.system.service;
 
 import com.homework.system.common.BusinessException;
+import com.homework.system.dto.ReviewRequest;
 import com.homework.system.dto.StudentSubmissionResponse;
 import com.homework.system.dto.SubmissionSaveResult;
 import com.homework.system.dto.SubmissionSummary;
 import com.homework.system.entity.Assignment;
 import com.homework.system.entity.Student;
+import com.homework.system.entity.SystemUser;
 import com.homework.system.repository.StudentRepository;
 import com.homework.system.repository.SubmissionRepository;
+import com.homework.system.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,15 +31,18 @@ public class SubmissionService {
     private final StudentRepository studentRepository;
     private final SubmissionRepository submissionRepository;
     private final FileStorageService fileStorageService;
+    private final UserRepository userRepository;
 
     public SubmissionService(AssignmentService assignmentService,
                              StudentRepository studentRepository,
                              SubmissionRepository submissionRepository,
-                             FileStorageService fileStorageService) {
+                             FileStorageService fileStorageService,
+                             UserRepository userRepository) {
         this.assignmentService = assignmentService;
         this.studentRepository = studentRepository;
         this.submissionRepository = submissionRepository;
         this.fileStorageService = fileStorageService;
+        this.userRepository = userRepository;
     }
 
     public void submit(Long assignmentId, String studentNo, String realName, MultipartFile file) throws IOException {
@@ -127,7 +133,30 @@ public class SubmissionService {
                 summary.processedName(),
                 summary.processedStorageKey(),
                 summary.processedType(),
-                canModify
+                canModify,
+                summary.reviewStatus(),
+                summary.score(),
+                summary.reviewComment(),
+                summary.reviewedBy(),
+                summary.reviewerName(),
+                summary.reviewedAt()
+        );
+    }
+
+    public void reviewSubmission(Long submissionId, ReviewRequest request) {
+        if (!submissionRepository.existsById(submissionId)) {
+            throw new BusinessException("提交记录不存在");
+        }
+        SystemUser reviewer = userRepository.findById(request.reviewedBy())
+                .orElseThrow(() -> new BusinessException("批阅人不存在"));
+        if (!"ADMIN".equals(reviewer.role()) && !userRepository.hasManagePermission(reviewer.id())) {
+            throw new BusinessException("只有老师或班级管理员可以批阅");
+        }
+        submissionRepository.saveReview(
+                submissionId,
+                request.score(),
+                request.comment() == null ? "" : request.comment().trim(),
+                reviewer.id()
         );
     }
 
