@@ -1,6 +1,7 @@
 package com.homework.system.controller;
 
 import com.homework.system.dto.AssignmentRequest;
+import com.homework.system.dto.DeadlineRequest;
 import com.homework.system.dto.StatisticsResponse;
 import com.homework.system.entity.Assignment;
 import com.homework.system.service.AssignmentService;
@@ -47,6 +48,12 @@ public class AssignmentController {
     public Assignment updateAssignment(@PathVariable Long id,
                                        @Valid @RequestBody AssignmentRequest request) {
         return assignmentService.updateAssignment(id, request);
+    }
+
+    @PutMapping("/{id}/deadline")
+    public Assignment extendDeadline(@PathVariable Long id,
+                                     @Valid @RequestBody DeadlineRequest request) {
+        return assignmentService.extendDeadline(id, request);
     }
 
     @DeleteMapping("/{id}")

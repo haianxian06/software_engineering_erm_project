@@ -2,6 +2,7 @@ package com.homework.system.service;
 
 import com.homework.system.common.BusinessException;
 import com.homework.system.dto.AssignmentRequest;
+import com.homework.system.dto.DeadlineRequest;
 import com.homework.system.dto.SubmissionCheckSnapshot;
 import com.homework.system.dto.StatisticsResponse;
 import com.homework.system.dto.SubmissionSummary;
@@ -96,6 +97,16 @@ public class AssignmentService {
                 existing.createdAt()
         );
         assignmentRepository.update(assignment);
+        return getAssignment(id);
+    }
+
+    public Assignment extendDeadline(Long id, DeadlineRequest request) {
+        Assignment existing = getAssignment(id);
+        LocalDateTime newDeadline = request.deadline();
+        if (!newDeadline.isAfter(existing.deadline())) {
+            throw new BusinessException("延时时间必须晚于当前截止时间");
+        }
+        assignmentRepository.updateDeadline(id, newDeadline);
         return getAssignment(id);
     }
 

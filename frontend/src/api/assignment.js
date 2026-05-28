@@ -16,6 +16,10 @@ export function updateAssignment(id, data) {
   return http.put(`/assignments/${id}`, data)
 }
 
+export function extendAssignmentDeadline(id, data) {
+  return http.put(`/assignments/${id}/deadline`, data)
+}
+
 export function deleteAssignment(id) {
   return http.delete(`/assignments/${id}`)
 }

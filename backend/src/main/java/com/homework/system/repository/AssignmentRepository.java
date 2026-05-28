@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -191,6 +192,14 @@ public class AssignmentRepository {
                 assignment.id());
         jdbcTemplate.update("delete from assignment_file_type where assignment_id = ?", assignment.id());
         saveFileTypes(assignment.id(), assignment.fileTypes());
+    }
+
+    public int updateDeadline(Long assignmentId, LocalDateTime deadline) {
+        return jdbcTemplate.update("""
+                update assignment
+                set deadline = ?
+                where id = ?
+                """, deadline, assignmentId);
     }
 
     public List<String> findArtifactPaths(Long assignmentId) {
