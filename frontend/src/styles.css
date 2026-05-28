@@ -124,7 +124,7 @@ select {
 }
 
 .topbar {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   height: 72px;
@@ -408,10 +408,6 @@ select {
 
   .user-box {
     padding: 12px 16px;
-  }
-
-  .topbar {
-    display: none;
   }
 
   .main-content {
