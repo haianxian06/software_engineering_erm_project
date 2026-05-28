@@ -411,11 +411,7 @@ select {
   }
 
   .topbar {
-    height: auto;
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 10px;
-    padding: 16px;
+    display: none;
   }
 
   .main-content {
