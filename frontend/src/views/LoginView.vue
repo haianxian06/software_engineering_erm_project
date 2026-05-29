@@ -1,29 +1,49 @@
 <template>
   <div class="login-page">
-    <section class="login-visual">
-      <div class="login-board">
-        <div class="brand-mark board-mark">作</div>
+    <section
+      class="login-visual"
+      :style="{ '--login-cover-image': `url(${loginCover})` }"
+      aria-label="作业收集管理系统封面"
+    >
+      <div class="login-cover-copy">
+        <div class="login-kicker">课程设计演示平台</div>
+        <div class="brand-mark login-cover-mark">作</div>
         <h1>作业收集管理系统</h1>
-        <p>软件工程课程设计 / 数据库系统设计 / 本地归档演示</p>
-        <div class="board-lines">
-          <span></span>
-          <span></span>
-          <span></span>
+        <p>围绕班级、作业、提交、批阅与归档构建的期末作业平台。</p>
+        <div class="login-cover-tags">
+          <span>关系型数据库</span>
+          <span>作业归档</span>
+          <span>批阅评分</span>
         </div>
+      </div>
+
+      <div class="login-flow-strip">
+        <span>发布</span>
+        <span>提交</span>
+        <span>批阅</span>
+        <span>归档</span>
       </div>
     </section>
 
     <section class="login-card-wrap">
       <div class="login-card">
-        <h1>{{ mode === 'login' ? '进入系统' : '创建账号' }}</h1>
-        <p>{{ mode === 'login' ? '请选择身份并填写信息' : '注册后会进入对应端口' }}</p>
+        <div class="login-card-head">
+          <div class="brand-mark login-entry-mark">作</div>
+          <div>
+            <span>期末作业平台</span>
+            <h1>{{ mode === 'login' ? '进入系统' : '创建账号' }}</h1>
+          </div>
+        </div>
+        <p class="login-card-subtitle">
+          {{ mode === 'login' ? '选择身份并填写信息后进入对应端。' : '填写基础信息后自动进入对应端。' }}
+        </p>
 
         <el-tabs v-model="mode" stretch>
           <el-tab-pane label="登录" name="login" />
           <el-tab-pane label="注册" name="register" />
         </el-tabs>
 
-        <el-form label-position="top" @submit.prevent>
+        <el-form class="login-form" label-position="top" @submit.prevent>
           <el-form-item label="身份">
             <el-segmented v-model="form.role" :options="roleOptions" />
           </el-form-item>
@@ -44,7 +64,7 @@
             <el-input v-model="form.workNo" placeholder="例如 T001" />
           </el-form-item>
 
-          <el-button type="primary" size="large" style="width: 100%" :loading="loading" @click="submit">
+          <el-button class="login-submit" type="primary" size="large" :loading="loading" @click="submit">
             {{ mode === 'login' ? '进入系统' : '注册并进入' }}
           </el-button>
         </el-form>
@@ -59,6 +79,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { login, register } from '../api/user'
+import loginCover from '../assets/login-cover.png'
 
 const router = useRouter()
 const user = useUserStore()
@@ -107,30 +128,3 @@ async function submit() {
   }
 }
 </script>
-
-<style scoped>
-.board-mark {
-  margin-bottom: 24px;
-}
-
-.board-lines {
-  display: grid;
-  gap: 12px;
-  margin-top: 34px;
-}
-
-.board-lines span {
-  display: block;
-  height: 12px;
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.2), rgba(22, 155, 107, 0.12));
-  border-radius: 8px;
-}
-
-.board-lines span:nth-child(2) {
-  width: 72%;
-}
-
-.board-lines span:nth-child(3) {
-  width: 46%;
-}
-</style>
