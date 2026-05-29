@@ -37,6 +37,14 @@
         <el-table-column prop="deadline" label="截止时间" min-width="170">
           <template #default="{ row }">{{ formatDate(row.deadline) }}</template>
         </el-table-column>
+        <el-table-column label="截止状态" width="110">
+          <template #default="{ row }">
+            <el-tag v-if="row.status === 'DRAFT'" type="info">未发布</el-tag>
+            <el-tag v-else :type="isExpired(row.deadline) ? 'danger' : 'success'">
+              {{ isExpired(row.deadline) ? '已截止' : '未截止' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="fileTypes" label="格式限制" />
         <el-table-column prop="maxSizeMb" label="大小限制">
           <template #default="{ row }">{{ row.maxSizeMb }}MB</template>
@@ -199,6 +207,10 @@ async function removeAssignment(row) {
 
 function formatDate(value) {
   return value ? value.replace('T', ' ').slice(0, 16) : '-'
+}
+
+function isExpired(value) {
+  return value ? new Date() > new Date(value) : false
 }
 
 onMounted(load)
