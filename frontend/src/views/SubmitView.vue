@@ -485,8 +485,8 @@ onMounted(load)
   align-items: flex-start;
   margin-top: 14px;
   padding: 12px 14px;
-  background: #f8fafc;
-  border: 1px solid var(--app-border);
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
   border-radius: 8px;
 }
 
@@ -501,9 +501,9 @@ onMounted(load)
   height: 36px;
   flex: 0 0 36px;
   place-items: center;
-  color: #475569;
+  color: var(--app-warning);
   background: #ffffff;
-  border: 1px solid var(--app-border-soft);
+  border: 1px solid #fed7aa;
   border-radius: 8px;
 }
 
@@ -519,9 +519,13 @@ onMounted(load)
 .review-result strong {
   display: block;
   margin-top: 2px;
-  color: #0f172a;
+  color: #9a3412;
   font-size: 22px;
   line-height: 1.15;
+}
+
+.review-result.reviewed strong {
+  color: #0f172a;
 }
 
 .review-result p {
