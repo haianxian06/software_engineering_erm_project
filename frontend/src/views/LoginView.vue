@@ -7,7 +7,7 @@
     >
       <div class="login-cover-copy">
         <div class="login-kicker">课程设计演示平台</div>
-        <div class="brand-mark login-cover-mark">作</div>
+        <AppLogo class="login-cover-mark" />
         <h1>作业收集管理系统</h1>
         <p>围绕班级、作业、提交、批阅与归档构建的期末作业平台。</p>
         <div class="login-cover-tags">
@@ -28,7 +28,7 @@
     <section class="login-card-wrap">
       <div class="login-card">
         <div class="login-card-head">
-          <div class="brand-mark login-entry-mark">作</div>
+          <AppLogo class="login-entry-mark" />
           <div>
             <span>期末作业平台</span>
             <h1>{{ mode === 'login' ? '进入系统' : '创建账号' }}</h1>
@@ -79,6 +79,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { login, register } from '../api/user'
+import AppLogo from '../components/AppLogo.vue'
 import loginCover from '../assets/login-cover.png'
 
 const router = useRouter()

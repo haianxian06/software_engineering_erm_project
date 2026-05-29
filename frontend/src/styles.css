@@ -64,16 +64,80 @@ select {
   border-bottom: 1px solid var(--app-border-soft);
 }
 
-.brand-mark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  color: #ffffff;
-  font-weight: 700;
-  background: linear-gradient(135deg, #2563eb 0%, #169b6b 100%);
+.brand-logo {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(135deg, #2563eb 0%, #0ea5e9 46%, #14b8a6 100%);
+  border: 1px solid rgba(255, 255, 255, 0.46);
   border-radius: 8px;
-  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.24);
+}
+
+.brand-logo::after {
+  position: absolute;
+  inset: 1px;
+  content: "";
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+}
+
+.brand-logo-glyph {
+  position: relative;
+  z-index: 1;
+  width: 34px;
+  height: 34px;
+}
+
+.logo-paper {
+  fill: rgba(255, 255, 255, 0.9);
+}
+
+.logo-fold,
+.logo-line,
+.logo-check,
+.logo-archive,
+.logo-archive-line {
+  fill: none;
+  stroke: #ffffff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo-fold {
+  stroke-width: 2;
+  opacity: 0.84;
+}
+
+.logo-line {
+  stroke: #2563eb;
+  stroke-width: 2;
+  opacity: 0.64;
+}
+
+.logo-line-main {
+  opacity: 0.9;
+}
+
+.logo-check {
+  stroke-width: 3;
+}
+
+.logo-archive {
+  fill: rgba(13, 148, 136, 0.95);
+  stroke-width: 2;
+}
+
+.logo-archive-line {
+  stroke-width: 2;
+  opacity: 0.85;
 }
 
 .brand strong,
@@ -368,6 +432,8 @@ select {
 }
 
 .login-cover-mark {
+  width: 54px;
+  height: 54px;
   margin-bottom: 22px;
 }
 
@@ -472,8 +538,18 @@ select {
 }
 
 .login-entry-mark {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
+}
+
+.login-cover-mark .brand-logo-glyph {
+  width: 41px;
+  height: 41px;
+}
+
+.login-entry-mark .brand-logo-glyph {
+  width: 36px;
+  height: 36px;
 }
 
 .login-card-head span {

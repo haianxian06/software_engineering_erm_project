@@ -2,7 +2,7 @@
   <el-container class="app-shell">
     <el-aside v-if="user.isLoggedIn" class="sidebar" width="220px">
       <div class="brand">
-        <div class="brand-mark">作</div>
+        <AppLogo />
         <div>
           <strong>作业收集系统</strong>
           <span>期末作业平台</span>
@@ -60,6 +60,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CirclePlus, Document, FolderOpened, UserFilled } from '@element-plus/icons-vue'
 import { useUserStore } from './stores/user'
+import AppLogo from './components/AppLogo.vue'
 
 const route = useRoute()
 const router = useRouter()
