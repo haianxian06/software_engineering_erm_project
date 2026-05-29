@@ -56,10 +56,6 @@
             <strong>{{ currentSubmission.storedName }}</strong>
           </div>
           <div>
-            <span>归档 PDF</span>
-            <strong>{{ currentSubmission.processedName || '待生成' }}</strong>
-          </div>
-          <div>
             <span>提交时间</span>
             <strong>{{ formatDate(currentSubmission.submitTime) }}</strong>
           </div>
