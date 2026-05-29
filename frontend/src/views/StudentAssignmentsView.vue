@@ -2,8 +2,7 @@
   <div class="page">
     <div class="student-page-head">
       <div class="head-copy">
-        <span class="page-eyebrow">我的作业</span>
-        <strong>按班级分组展示</strong>
+        <strong>我的作业</strong>
         <p>每个班级内按发布时间从新到旧排列，优先处理未截止任务。</p>
       </div>
       <div class="toolbar-actions">
@@ -150,18 +149,10 @@ onMounted(load)
   min-width: 0;
 }
 
-.page-eyebrow {
-  display: block;
-  margin-bottom: 3px;
-  color: var(--app-primary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .head-copy strong {
   display: block;
   color: #0f172a;
-  font-size: 18px;
+  font-size: 24px;
   line-height: 1.3;
 }
 
