@@ -40,7 +40,14 @@
           <h3>我的班级</h3>
           <p class="meta">点击表格行切换班级</p>
         </div>
-        <el-table :data="classes" stripe highlight-current-row @current-change="selectClass">
+        <el-table
+          ref="classTableRef"
+          :data="classes"
+          row-key="id"
+          stripe
+          highlight-current-row
+          @row-click="selectClass"
+        >
           <el-table-column prop="className" label="班级" min-width="180" />
           <el-table-column prop="major" label="专业" min-width="150" />
           <el-table-column prop="courseName" label="课程" width="120" />
@@ -123,7 +130,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh } from '@element-plus/icons-vue'
 import {
@@ -142,6 +149,7 @@ const classes = ref([])
 const members = ref([])
 const availableStudents = ref([])
 const selectedClass = ref(null)
+const classTableRef = ref(null)
 const studentNoToAdd = ref('')
 const creating = ref(false)
 const adding = ref(false)
@@ -160,9 +168,10 @@ const generatedClassName = computed(() => {
 })
 
 async function loadClasses() {
+  const selectedClassId = selectedClass.value?.id
   classes.value = await listClasses(user.id)
   if (classes.value.length > 0) {
-    const current = classes.value.find((item) => item.id === selectedClass.value?.id)
+    const current = classes.value.find((item) => item.id === selectedClassId)
     await selectClass(current || classes.value[0])
   } else {
     await selectClass(null)
@@ -183,6 +192,7 @@ async function selectClass(row) {
   ])
   members.value = memberList
   availableStudents.value = availableList
+  await syncSelectedClassRow()
 }
 
 async function createNewClass() {
@@ -259,6 +269,22 @@ async function refreshSelectedClass() {
   selectedClass.value = classList.find((item) => item.id === classId) || selectedClass.value
   members.value = memberList
   availableStudents.value = availableList
+  await syncSelectedClassRow()
+}
+
+async function syncSelectedClassRow() {
+  await nextTick()
+  if (!classTableRef.value) {
+    return
+  }
+  if (!selectedClass.value) {
+    classTableRef.value.setCurrentRow()
+    return
+  }
+  const current = classes.value.find((item) => item.id === selectedClass.value.id)
+  if (current) {
+    classTableRef.value.setCurrentRow(current)
+  }
 }
 
 function roleText(value) {
